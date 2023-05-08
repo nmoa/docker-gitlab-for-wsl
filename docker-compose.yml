@@ -1,0 +1,43 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:15.11.2-ce.0
+    container_name: gitlab
+    restart: always
+    hostname: 'localhost'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://${WINDOWS_IP}:8080'
+        pages_external_url "http://docs.example.com"
+        gitlab_rails['gitlab_shell_ssh_port'] = 12222
+        gitlab_rails['backup_keep_time'] = 604800
+        nginx['listen_port'] = 80
+        gitlab_pages['enable'] = true
+    ports:
+      - '80:80'
+      - '443:443'
+      - '12222:22'
+    volumes:
+      - /srv/gitlab/config:/etc/gitlab
+      - /srv/gitlab/logs:/var/log/gitlab
+      - /srv/gitlab/data:/var/opt/gitlab
+  gitlab-runner:
+    build:
+      context: ./gitlab-runner
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - /srv/gitlab-runner/config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+      - nginx-html:/srv/nginx/html
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - '8888:80'
+    volumes:
+      - nginx-html:/usr/share/nginx/html
+volumes:
+  nginx-html:
+
+
